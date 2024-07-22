@@ -1,10 +1,12 @@
 # Perfect-Coronagraph-Experiment
 Experimental implementation of an ideal coronagraph using spatial mode (de)multiplexing.
+
 **Authors: Nico Deshler, Itay Ozer**
+
 **Emails: ndeshler@arizona.edu, iozer@arizona.edu**
 
 ### Overview:
-This repository contains all experimental details and data-processing code associated with our experimental implementation of an ideal direct-imaging coronagraph. A link to the ArXiv upload containing the primary results of this paper can be found in the following link:
+This repository contains all experimental details and data-processing code associated with our experimental implementation of an ideal direct-imaging coronagraph. The manuscript containing central results of this experimental work found in the following ArXiv submission:
 
 [Experimental Demonstration of a Quantum-Optimal Coronagraph Using Spatial Mode Sorters](https://doi.org/10.48550/arXiv.2407.12776)
 
