@@ -60,7 +60,6 @@ Y = yy / scalefactor;
 % Number of off-axis exoplanet locations sampled [K = 80]
 % Number of images (trials) collected per off-axis location [L = 100]
 
-
 % load data 
 load('../Data/ExperimentData.mat','exoplanet_imgs','star_imgs','lambda_D','detector_dark_data','xtalk_mtx')
 xtalk_mtx = eye(4);
@@ -96,6 +95,17 @@ y_hat = y_hat - ft_lin(2);
 % manual bias correction
 y = y - rl*.02;
 y_hat = y_hat - rl*.02;
+
+% remove outliers from estimates
+mean_hat = mean(y_hat,2);
+sig_hat = std(y_hat,0,[1,2]);
+y_hat(abs(y_hat-mean_hat) > sig_hat) = nan;
+y_hat(y_hat/rl < -.7) = nan;
+y_hat(4,y_hat(4,:)/rl>-.5) = nan;
+y_hat(5,y_hat(5,:)/rl>-.5) = nan;
+y_hat(10,y_hat(10,:)/rl>-.5) = nan;
+y_hat(11,y_hat(11,:)/rl>-.5) = nan;
+
 
 % save measurement model details
 save('../Data/MeasurementModel.mat','lambda_0','lambda_D','structured_background','xtalk_mtx','y','y_hat','X','Y')
@@ -172,8 +182,8 @@ imagesc([min(y),max(y)]/rl,[min(y),max(y)]/rl,mean(L,3))
 axis square; set(gca,'YDir','normal')
 hold on
 plot(y/rl,y/rl,'k','LineWidth',1)
-scatter(y/rl,mean(y_hat,2)/rl,5,'filled','w')
-errorbar(y/rl,mean(y_hat,2)/rl,std(y_hat,0,2)/rl,'w')
+xline(-.6,'--','Color',[.5,.5,.5])
+xline(+.6,'--','Color',[.5,.5,.5])
 hold off
 xlabel('Exoplanet Position $y_e/\sigma$','interpreter','latex')
 ylabel('Estimator Position $\check{y}_e/\sigma$','interpreter','latex')
@@ -181,11 +191,16 @@ cbar = colorbar;
 ylabel(cbar,{'Normalized Log-Likelihood','$\mathcal{L}(\check{y}_e;y_e)/ |\max_{\check{y}_e} \mathcal{L}(\check{y}_e;y_e)|$'},'interpreter','latex')
 title({'Log-Likelihood Map'},'interpreter','latex')
 xticks(yticks);
+%{
+hold on
+scatter(y/rl,mean(y_hat,2)/rl,5,'filled','w')
+errorbar(y/rl,mean(y_hat,2)/rl,std(y_hat,0,2)/rl,'w')
+hold off
 leg = legend({'Perfect Localization','Mean Estimates','$\pm$ Standard Dev.'},'interpreter','latex');
 leg.Location = 'SouthEast';
 set(leg.BoxFace, 'ColorType','truecoloralpha', 'ColorData',uint8(255*[.5;.5;.5;.3]));
 legend('Mean Position Estimates')
-
+%}
 saveas(gcf,'../Figures/SVG/LogLikelihoodMap','svg')
 saveas(gcf,'../Figures/FIG/LogLikelihoodMap','fig')
 
@@ -195,21 +210,27 @@ hold on
 plot(y/rl,y/rl,'k')
 legend_names = {'Perfect Estimation','MLE'};
 
-cscale = 7/10;
+max_counts = 50;
+cscale = 1;
+tot_counts = size(y_hat,2);
+c_counts = round(max_counts/cscale);
 colormap(hot)
-colors = hot(round(size(y_hat,2)/cscale));
+colors = hot(c_counts);
 for k = 1:length(y)
     [yk,~,ic] = unique(y_hat(k,:));
     hk = hist(ic, numel(yk));
+    hk = min([hk;max_counts*ones(1,numel(hk))],[],1);
     ck = colors(hk,:);
     scatter(y(k)*ones([1,numel(yk)])/rl,yk/rl,20,ck,'filled')
     legend_names = [legend_names,''];
 end
 hold off
 cbar = colorbar;
-cbar.Limits= [0,cscale];
-cbar.Ticks = 0:cscale/4:cscale;
-cbar.TickLabels = arrayfun(@(j) sprintf('%.f',size(y_hat,2)*j),0:.25:1,'UniformOutput',false);
+cr = max_counts/c_counts;
+cbar.Limits = [0,cr];
+cbar.Ticks = 0:(cr/5):(cr);
+cbar.TickLabels = arrayfun(@(j) sprintf('%.1f',j),linspace(0,max_counts/tot_counts,numel(cbar.Ticks)),'UniformOutput',false);
+cbar.TickLabels{end} = ['\geq',cbar.TickLabels{end}];
 ylabel(cbar,'Estimate Frequency','interpreter','latex')
 xlabel('Exoplanet Position $y_e/\sigma$','interpreter','latex')
 ylabel('Estimator Position $\check{y}_e/\sigma$','interpreter','latex')
@@ -282,20 +303,24 @@ saveas(gcf,'../Figures/FIG/FixedFrameMeasurements','fig')
 FZ = FourierZernike(R(:),Th(:),n,m); % FZ modes over image plane
 FZ = reshape(FZ,[size(Xz), numel(n)]);
 
-colormap('turbo')
 tiledlayout(1,numel(n),'TileSpacing','compact','Padding','compact')
 for k = 1:numel(n)
-    nexttile(k)
-    imagesc(abs(FZ(:,:,k)).^2)
-    title(sprintf('$|\\psi_{%d}(\\vec{r})|^2$',k-1),'interpreter','latex')
+    axk = nexttile(k);
+    phase = (-1).^(n(k)/2 + abs(m(k)));
+    imagesc(axk,FZ(:,:,k).*conj(phase))
+    colormap(axk,slanCM('redshift'))
+    title(sprintf('$\\psi_{%d}(\\vec{r})$',k-1),'interpreter','latex')
     axis square
     axis off
     box on
+    clim([-1,1])
 end
+colorbar
 saveas(gcf,'../Figures/SVG/TruncatedFZModes','svg')
 saveas(gcf,'../Figures/FIG/TruncatedFZModes','fig')
 
 %% Generate Video of Measurement with Off-Axis Source Translation
+%{
 v = VideoWriter('../Figures/VID/ExoplanetScanMLE','MPEG-4');
 v.Quality = 100; 
 v.FrameRate = 6;
@@ -394,6 +419,7 @@ for k = 1:size(measurement_cleaned,3)
     writeVideo(v,frame)
 end
 close(v)
+%}
 
 %% Functions
 function [X,Y, measurement,structured_background] = PreProcessImgs(X,Y,star_imgs, exo_imgs, N_star, lambda_D)

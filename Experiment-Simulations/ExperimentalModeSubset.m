@@ -41,18 +41,25 @@ QFI_rr = (1-delta_p.^2)*pi^2 - 4*(1-delta_p.^2).*delta_p.^2 ...
 %% FIGURES
 % subfig 1: Mode Probabilities
 figure;
+c = [0,0,0;
+    1,0,0;
+    0,1,0;
+    0,0,1];
+colormap("turbo")
 tiledlayout(1,2,'TileSpacing','compact','Padding','compact')
 nexttile(1)
-plot(y/rl,p_nm,'--','LineWidth',1.5)
 hold on
-plot(y/rl,sum(p_nm,2),'k','LineWidth',1.5)
+for k = 1:4
+    plot(y/rl,p_nm(:,k),'Color',c(k,:),'LineWidth',1.5)
+end
+plot(y/rl,sum(p_nm,2),'--k','LineWidth',1.5)
 plot(y/rl,ones(size(y)),'-.k','LineWidth',1.5)
+xline(.6,'--','Color',[.5,.5,.5],'LineWidth',1.5)
 hold off
 xlabel('Exoplanet Position $y_{e}/\sigma$','interpreter','latex')
-ylabel('Photon Mode Probability $P(y_e)$','interpreter','latex')
+ylabel('Photon Mode Probability $P(y_e/\sigma)$','interpreter','latex')
 leg_names = arrayfun(@(j) sprintf('$ P_{ %d }$',j),0:(numel(n)-1),'UniformOutput',false);
-leg = legend([leg_names,'$P = \sum_{k=0}^{3} P_{k}$','P=1'],'interpreter','latex');
-title(leg,'Mode','interpreter','latex')
+leg = legend([leg_names,'$\sum_{k=0}^{3} P_{k}$','P=1',''],'interpreter','latex');
 title('Truncated Basis Support','interpreter','latex')
 axis square
 box on
@@ -60,17 +67,18 @@ ylim([0,1.2])
 
 % subfig 1: Mode CFIs
 nexttile(2)
-plot(y/rl,CFI_nm_rr/((1-delta_p.^2)*pi^2),'--','LineWidth',1.5)
 hold on
-plot(y/rl,sum(CFI_nm_rr,2)/((1-delta_p.^2)*pi^2),'k','LineWidth',1.5)
+for k = 1:4
+    plot(y/rl,CFI_nm_rr(:,k)/((1-delta_p.^2)*pi^2),'Color',c(k,:),'LineWidth',1.5)
+end
+plot(y/rl,sum(CFI_nm_rr,2)/((1-delta_p.^2)*pi^2),'--k','LineWidth',1.5)
 plot(y/rl,QFI_rr/((1-delta_p.^2)*pi^2),'-.k','LineWidth',1.5)
 hold off
 
 xlabel('Exoplanet Position $y_{e}/\sigma$','interpreter','latex')
-ylabel('Fisher Information $\mathcal{I}(y_e) / 4 \pi^2 b(1-b) $','interpreter','latex')
+ylabel('Fisher Information $\mathcal{I}(y_e/\sigma) / 4 \pi^2 b(1-b) $','interpreter','latex')
 leg_names = arrayfun(@(j) sprintf('$ \\mathcal{I}_{%d}$',j),0:(numel(n)-1),'UniformOutput',false);
-leg = legend([leg_names,'CFI $\mathcal{I} = \sum_{k=0}^{3}\mathcal{I}_{k}$','QFI $\mathcal{K}$'],'interpreter','latex');
-title(leg,'Mode','interpreter','latex')
+leg = legend([leg_names,'$\sum_{k=0}^{3}\mathcal{I}_{k}$','QFI $\mathcal{K}$'],'interpreter','latex');
 title('Truncated Basis Fisher Information','interpreter','latex')
 axis square
 box on
