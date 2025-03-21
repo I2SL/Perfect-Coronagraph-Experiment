@@ -7,7 +7,7 @@ Experimental implementation of an ideal coronagraph using spatial mode (de)multi
 
 ### Overview:
 This repository contains all experimental details and data-processing code associated with our experimental implementation of an ideal direct-imaging coronagraph. The paper associated with this experimental work found at:
-[![DOI](https://doi.org/10.1364/OPTICA.545414)] (Optica)
+[![DOI]()](https://doi.org/10.1364/OPTICA.545414) (Optica)
 [Experimental Demonstration of a Quantum-Optimal Coronagraph Using Spatial Mode Sorters](https://doi.org/10.48550/arXiv.2407.12776) (ArXiv)
 
 # Getting the Raw Data
